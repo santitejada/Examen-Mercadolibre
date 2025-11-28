@@ -2,30 +2,46 @@ package com.example.mutant.service;
 
 import org.springframework.stereotype.Service;
 
+import java.util.Set;
+
 @Service
 public class MutantDetector {
 
     private static final int SEQ = 4;
+    private static final Set<Character> ALLOWED = Set.of('A', 'T', 'C', 'G');
 
     public boolean isMutant(String[] dna) {
         validateInput(dna);
-        char[][] matrix = toMatrix(dna);
+        char[][] m = toMatrix(dna);
+        int n = m.length;
 
         int sequences = 0;
 
-        // horizontal
-        sequences += countHorizontal(matrix);
-        if (sequences > 1) return true;
+        // single pass: desde cada celda miro 4 direcciones
+        int[][] directions = {
+                {0, 1},   // derecha
+                {1, 0},   // abajo
+                {1, 1},   // diagonal principal ↘
+                {1, -1}   // diagonal secundaria ↙
+        };
 
-        // vertical
-        sequences += countVertical(matrix);
-        if (sequences > 1) return true;
+        for (int i = 0; i < n; i++) {
+            for (int j = 0; j < n; j++) {
+                for (int[] d : directions) {
+                    if (hasSequenceFrom(m, i, j, d[0], d[1])) {
+                        sequences++;
+                        if (sequences > 1) {
+                            return true; // early termination
+                        }
+                    }
+                }
+            }
+        }
 
-        // diagonales
-        sequences += countDiagonal(matrix);
-
-        return sequences > 1;
+        return false;
     }
+
+    // ====== helpers ======
 
     private void validateInput(String[] dna) {
         if (dna == null || dna.length == 0) {
@@ -38,8 +54,10 @@ public class MutantDetector {
             if (row == null || row.length() != n) {
                 throw new IllegalArgumentException("La matriz debe ser NxN");
             }
-            if (!row.matches("[ATCG]+")) {
-                throw new IllegalArgumentException("Caracteres inválidos en ADN");
+            for (char c : row.toCharArray()) {
+                if (!ALLOWED.contains(c)) { // validación con Set O(1)
+                    throw new IllegalArgumentException("Caracter inválido: " + c);
+                }
             }
         }
     }
@@ -47,67 +65,29 @@ public class MutantDetector {
     private char[][] toMatrix(String[] dna) {
         int n = dna.length;
         char[][] matrix = new char[n][n];
-
         for (int i = 0; i < n; i++) {
             matrix[i] = dna[i].toCharArray();
         }
         return matrix;
     }
 
-    private int countHorizontal(char[][] m) {
+    private boolean hasSequenceFrom(char[][] m, int i, int j, int di, int dj) {
         int n = m.length;
-        int count = 0;
 
-        for (int i = 0; i < n; i++) {
-            for (int j = 0; j <= n - SEQ; j++) {
-                if (allEqual(m[i][j], m[i][j + 1], m[i][j + 2], m[i][j + 3])) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
+        int endRow = i + (SEQ - 1) * di;
+        int endCol = j + (SEQ - 1) * dj;
 
-    private int countVertical(char[][] m) {
-        int n = m.length;
-        int count = 0;
-
-        for (int i = 0; i <= n - SEQ; i++) {
-            for (int j = 0; j < n; j++) {
-                if (allEqual(m[i][j], m[i + 1][j], m[i + 2][j], m[i + 3][j])) {
-                    count++;
-                }
-            }
-        }
-        return count;
-    }
-
-    private int countDiagonal(char[][] m) {
-        int n = m.length;
-        int count = 0;
-
-        // diagonales "\"
-        for (int i = 0; i <= n - SEQ; i++) {
-            for (int j = 0; j <= n - SEQ; j++) {
-                if (allEqual(m[i][j], m[i + 1][j + 1], m[i + 2][j + 2], m[i + 3][j + 3])) {
-                    count++;
-                }
-            }
+        if (endRow < 0 || endRow >= n || endCol < 0 || endCol >= n) {
+            return false; // se sale de la matriz
         }
 
-        // diagonales "/"
-        for (int i = 0; i <= n - SEQ; i++) {
-            for (int j = SEQ - 1; j < n; j++) {
-                if (allEqual(m[i][j], m[i + 1][j - 1], m[i + 2][j - 2], m[i + 3][j - 3])) {
-                    count++;
-                }
+        char c = m[i][j];
+
+        for (int k = 1; k < SEQ; k++) {
+            if (m[i + k * di][j + k * dj] != c) {
+                return false;
             }
         }
-
-        return count;
-    }
-
-    private boolean allEqual(char a, char b, char c, char d) {
-        return a == b && b == c && c == d;
+        return true;
     }
 }

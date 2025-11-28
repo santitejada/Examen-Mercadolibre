@@ -14,7 +14,6 @@ public class StatsService {
     public StatsResponse getStats() {
         long mutants = repository.countByMutant(true);
         long humans = repository.countByMutant(false);
-
         double ratio = humans == 0 ? 0.0 : (double) mutants / humans;
 
         return new StatsResponse(mutants, humans, ratio);
