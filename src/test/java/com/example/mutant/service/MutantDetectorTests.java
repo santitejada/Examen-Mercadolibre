@@ -37,28 +37,35 @@ class MutantDetectorTests {
     @Test
     void givenSingleSequence_shouldReturnFalse() {
         String[] dna = {
-                "AAAAGT",
-                "CAGTGC",
-                "TTATGT",
-                "AGAAGG",
-                "GCCCTA",
+                "AAGAGT",
+                "CCTTGC",
+                "TAGTGT",
+                "AGTCGG",
+                "GCAGCA",
                 "TCACTG"
         };
+
         assertFalse(detector.isMutant(dna));
     }
+
+
 
     @Test
     void givenDiagonalSequence_shouldReturnTrue() {
         String[] dna = {
-                "ATGCGA",
-                "CAGTAC",
-                "TTATGT",
-                "AGTAGG",
-                "GCCCTA",
+                "AATGGA",
+                "CAATGC",
+                "TTAAGT",
+                "AGAAGG",
+                "CCCATA",
                 "TCACTG"
         };
+
+        // Diagonal principal:
+        // (0,0)=A, (1,1)=A, (2,2)=A, (3,3)=A → SECUENCIA de 4 A
         assertTrue(detector.isMutant(dna));
     }
+
 
     @Test
     void givenInvalidCharacters_shouldThrowException() {
@@ -74,4 +81,31 @@ class MutantDetectorTests {
         assertThrows(IllegalArgumentException.class,
                 () -> detector.isMutant(dna));
     }
+    @Test
+    void givenSecondaryDiagonalSequence_shouldReturnTrue() {
+        String[] dna = {
+                "ATGCGA",
+                "CAGTGC",
+                "TTATGT",
+                "AGGAGG",
+                "GCCCTA",
+                "TCACTG"
+        };
+
+        assertTrue(detector.isMutant(dna));
+    }
+    @Test
+    void givenNonSquareMatrix_shouldThrowException() {
+        String[] dna = {
+                "ATGC",
+                "CAGT",
+                "TTAT"
+                // Falta una fila para que sea 4x4
+        };
+
+        assertThrows(IllegalArgumentException.class,
+                () -> detector.isMutant(dna));
+    }
+
+
 }
