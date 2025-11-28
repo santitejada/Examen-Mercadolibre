@@ -32,10 +32,22 @@ public class MutantController {
     )
     @PostMapping("/mutant")
     public ResponseEntity<Void> isMutant(@Valid @RequestBody DnaRequest request) {
+
         String[] dnaArray = request.getDna().toArray(new String[0]);
         boolean isMutant = mutantService.processDna(dnaArray);
-        return isMutant ? ResponseEntity.ok().build()
-                : ResponseEntity.status(403).build();
+
+        if (isMutant) {
+            return ResponseEntity
+                    .ok()
+                    .header("X-Result", "Mutante detectado")
+                    .build();
+        } else {
+            return ResponseEntity
+                    .status(403)
+                    .header("X-Result", "No es mutante")
+                    .build();
+        }
     }
 }
+
 
