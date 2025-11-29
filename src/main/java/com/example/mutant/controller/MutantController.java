@@ -1,6 +1,7 @@
 package com.example.mutant.controller;
 
 import com.example.mutant.dto.DnaRequest;
+import com.example.mutant.dto.MutantResponse;
 import com.example.mutant.service.MutantService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;
@@ -31,23 +32,20 @@ public class MutantController {
             content = @Content(schema = @Schema(implementation = String.class))
     )
     @PostMapping("/mutant")
-    public ResponseEntity<Void> isMutant(@Valid @RequestBody DnaRequest request) {
-
+    public ResponseEntity<MutantResponse> isMutant(@Valid @RequestBody DnaRequest request) {
         String[] dnaArray = request.getDna().toArray(new String[0]);
         boolean isMutant = mutantService.processDna(dnaArray);
 
-        if (isMutant) {
-            return ResponseEntity
-                    .ok()
-                    .header("X-Result", "Mutante detectado")
-                    .build();
-        } else {
-            return ResponseEntity
-                    .status(403)
-                    .header("X-Result", "No es mutante")
-                    .build();
-        }
+        MutantResponse response = new MutantResponse(
+                isMutant,
+                isMutant ? "Es un mutante" : "No es un mutante"
+        );
+
+        return isMutant
+                ? ResponseEntity.ok(response)                    // 200 + JSON
+                : ResponseEntity.status(403).body(response);     // 403 + JSON
     }
 }
+
 
 
